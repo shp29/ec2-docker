@@ -1,0 +1,70 @@
+---
+  - hosts: all
+    remote_user: root
+    become: true
+    gather_facts: no
+    ignore_errors: yes
+    tasks:
+      - name: Copy Html Code to Controller Node
+        copy:
+          src:  index.html
+          dest: /tmp
+
+      - name: "Installing Docker Prerequisite packages"
+        yum:
+          name: yum-utils
+          state: present
+
+      - name: Configuring docker-ce repo
+        get_url:
+          url: https://download.docker.com/linux/rhel/docker-ce.repo
+          dest: /etc/yum.repos.d
+      
+      - name: replacing rhel to centos in docker ce repo
+        replace:
+          path: /etc/yum.repos.d/docker-ce.repo
+          regexp: 'rhel'
+          replace: 'centos'
+
+      - name: " Installing Docker latest version"
+        yum:
+          name: "{{item}}"
+          state: present
+        loop:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-compose-plugin
+      #- name: Package Installer For Python3 
+       # package:
+       #   name: python3
+       #   state: present
+
+      - name: Install pip and apache
+        yum: 
+          name: "{{item}}"
+          state: present
+        loop:
+          - python-pip
+
+      - name: Start service docker
+        service:
+          name: docker
+          state: started
+      
+      - name: Installing python library for the Docker Remote API
+        pip:
+          name: docker==4.4.4
+
+      - name: "pull httpd image"
+        docker_image:
+            name: httpd  
+            source: pull
+
+      - name: Create a web container
+        docker_container:
+          name: web
+          image: httpd
+          state: started
+          ports: 3000:80
+          volumes: /tmp/index.html:/usr/local/apache2/htdocs/index.html
