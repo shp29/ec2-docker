@@ -35,10 +35,6 @@
           - docker-ce-cli
           - containerd.io
           - docker-compose-plugin
-      #- name: Package Installer For Python3 
-       # package:
-       #   name: python3
-       #   state: present
 
       - name: Install pip and apache
         yum: 
